@@ -83,7 +83,7 @@
 @@ -504,6 +511,9 @@ SYSCALL_DEFINE4(fstatat64, int, dfd, const char __user *, filename,
  	struct kstat stat;
  	int error;
- 
+
 +#if defined(CONFIG_KSU) && !defined(CONFIG_KSU_KPROBES_HOOK)
 +	ksu_handle_stat(&dfd, &filename, &flag);
 +#endif
@@ -133,27 +133,4 @@
 +		ksu_handle_sys_read(fd, &buf, &count);
 +#endif
  	return ksys_read(fd, buf, count);
- }
---- a/fs/readdir.c
-+++ b/fs/readdir.c
-@@ -21,6 +21,11 @@
- #include <linux/security.h>
- #include <linux/syscalls.h>
- 
-+#if defined(CONFIG_KSU) && !defined(CONFIG_KSU_KPROBES_HOOK)
-+extern __attribute__((hot, always_inline)) int ksu_handle_getdents64(unsigned int *fd, struct linux_dirent64 __user **dirent_user,
-+			       unsigned int *count);
-+#endif
-+
- SYSCALL_DEFINE3(getdents64, unsigned int, fd,
- 		struct linux_dirent64 __user *, dirent, unsigned int, count)
- {
-@@ -34,6 +39,9 @@ SYSCALL_DEFINE3(getdents64, unsigned int, fd,
- 	ssize_t ret;
- 
- 	ret = __do_sys_getdents64(fd, dirent, count);
-+#if defined(CONFIG_KSU) && !defined(CONFIG_KSU_KPROBES_HOOK)
-+	ksu_handle_getdents64(&fd, &dirent, &count);
-+#endif
- 	return ret;
  }
